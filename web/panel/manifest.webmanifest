@@ -1,0 +1,27 @@
+{
+  "name": "Panel Fit Jump",
+  "short_name": "Fit Jump",
+  "description": "Registrar pagos y sellos de las socias desde el mostrador.",
+  "lang": "es-MX",
+  "dir": "ltr",
+  "start_url": "/panel/",
+  "scope": "/panel/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0138DD",
+  "theme_color": "#0138DD",
+  "icons": [
+    {
+      "src": "/panel/icono-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/panel/icono-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

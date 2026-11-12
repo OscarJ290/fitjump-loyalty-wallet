@@ -1,0 +1,489 @@
+/*
+  Estilos del panel de recepcion.
+
+  SE DISEÑA PARA UN SAMSUNG GALAXY S25 ULTRA EN LA MANO DE QUIEN COBRA, de pie, con una
+  sola mano y con las dos cosas que un gimnasio tiene de sobra: prisa y luz irregular.
+  De ahi las tres decisiones de forma:
+
+  1. **Fondo claro, no el degradado de marca.** La pagina de alta vive en el degradado
+     porque la socia la mira diez segundos y tiene que verse bonita. El panel se mira
+     cincuenta veces al dia y hay que LEERLO: tinta oscura sobre claro aguanta el
+     reflejo de una ventana. La marca vive en la cabecera y en los botones.
+  2. **Los botones grandes van abajo**, que es donde llega el pulgar de una mano. El
+     pago, que es el que se toca en el noventa por ciento de las visitas, es el mas
+     grande y el unico del color de marca.
+  3. **Nada depende del color para entenderse.** Lo que el color dice, el texto lo
+     repite, porque el verde y el rojo sobre una pantalla al sol se parecen.
+*/
+
+:root {
+  --azul: #0138dd;
+  --morado: #9500b6;
+  --violeta: #bc44fe;
+  --claro: #f7f7f7;
+  --tinta: #1a1030;
+  --tinta-suave: #5b5370;
+  --linea: #e2dfe9;
+  --blanco: #ffffff;
+  --alerta: #ffd4d4;
+  --alerta-tinta: #7a0b1e;
+  --aviso: #fff3cd;
+  --aviso-tinta: #6b4b00;
+  --listo: #d8f5e3;
+  --listo-tinta: #0b5f33;
+  --sombra: 0 2px 10px rgba(26, 16, 48, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--claro);
+}
+
+body {
+  min-height: 100dvh;
+  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  color: var(--tinta);
+  /* El panel no es una pagina de lectura: que un toque largo no seleccione texto. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+#panel {
+  max-width: 560px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --------------------------------------------------------------------- */
+/* Cabecera                                                               */
+/* --------------------------------------------------------------------- */
+.cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+  background: linear-gradient(135deg, var(--azul) 0%, var(--morado) 100%);
+  color: var(--blanco);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.cabecera h1 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  flex: 1;
+  letter-spacing: -0.01em;
+}
+
+.cabecera .quien {
+  font-size: 0.8rem;
+  opacity: 0.85;
+  font-weight: 400;
+  display: block;
+}
+
+/*
+  ⚠️ `width: auto` y `flex: 0 0 auto` NO SON DECORACION. La regla general de este
+  archivo pone `width: 100%` a todos los botones, porque casi todos son de pulgar y van
+  a lo ancho. Heredado aqui, el boton de bloquear se comia la cabecera y partia el
+  titulo en tres renglones, comprobado en el telefono de Oscar el 18 de octubre de 2026.
+  Un boton secundario no puede ser el elemento mas grande de la pantalla.
+*/
+.cabecera button {
+  width: auto;
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--blanco);
+  border: 0;
+  border-radius: 11px;
+  min-height: 42px;
+  min-width: 42px;
+  padding: 0 13px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+main {
+  flex: 1;
+  padding: 16px max(16px, env(safe-area-inset-left)) calc(24px + env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-right));
+}
+
+/* --------------------------------------------------------------------- */
+/* Piezas comunes                                                         */
+/* --------------------------------------------------------------------- */
+.tarjeta {
+  background: var(--blanco);
+  border: 1px solid var(--linea);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: var(--sombra);
+}
+
+.tarjeta + .tarjeta {
+  margin-top: 14px;
+}
+
+h2 {
+  font-size: 1.28rem;
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--tinta-suave);
+  margin: 0 0 10px;
+}
+
+p {
+  margin: 0 0 10px;
+  line-height: 1.45;
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+.suave {
+  color: var(--tinta-suave);
+  font-size: 0.9rem;
+}
+
+button {
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  border: 0;
+  border-radius: 13px;
+  /* El pulgar necesita 44px de alto; esto da mas. */
+  min-height: 52px;
+  padding: 14px 16px;
+  width: 100%;
+  background: var(--blanco);
+  color: var(--tinta);
+  border: 1.5px solid var(--linea);
+}
+
+button:disabled {
+  opacity: 0.5;
+}
+
+button.principal {
+  background: linear-gradient(135deg, var(--azul) 0%, var(--morado) 100%);
+  color: var(--blanco);
+  border: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  min-height: 62px;
+}
+
+button.premio {
+  background: var(--violeta);
+  color: var(--blanco);
+  border: 0;
+  font-weight: 700;
+}
+
+button.peligro {
+  color: var(--alerta-tinta);
+  border-color: var(--alerta);
+}
+
+button + button {
+  margin-top: 10px;
+}
+
+.fila {
+  display: flex;
+  gap: 10px;
+}
+
+.fila button {
+  margin-top: 0;
+}
+
+input[type='text'],
+input[type='search'],
+input[type='tel'] {
+  width: 100%;
+  /* 16px es el minimo que evita que el telefono haga zoom al enfocar. */
+  font-size: 17px;
+  font-family: inherit;
+  color: var(--tinta);
+  background: var(--blanco);
+  border: 1.5px solid var(--linea);
+  border-radius: 13px;
+  padding: 15px 14px;
+  outline: none;
+}
+
+input:focus {
+  border-color: var(--violeta);
+}
+
+/* --------------------------------------------------------------------- */
+/* Recados                                                                */
+/* --------------------------------------------------------------------- */
+.recado {
+  border-radius: 13px;
+  padding: 13px 15px;
+  font-size: 0.93rem;
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+
+.recado.bien {
+  background: var(--listo);
+  color: var(--listo-tinta);
+}
+
+.recado.ojo {
+  background: var(--aviso);
+  color: var(--aviso-tinta);
+}
+
+.recado.mal {
+  background: var(--alerta);
+  color: var(--alerta-tinta);
+}
+
+.recado b {
+  display: block;
+  margin-bottom: 2px;
+}
+
+/*
+  La etiqueta de como va el pase contra Google. Discreta a proposito: es informacion,
+  no una alarma, y el panel nunca espera a Wallet. Cuando de verdad falla, el aviso
+  grande de `.recado.ojo` se encarga.
+*/
+.sincro {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  font-size: 0.84rem;
+  color: var(--tinta-suave);
+}
+
+.sincro .bolita {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--tinta-suave);
+}
+
+.sincro.ok .bolita {
+  background: var(--listo-tinta);
+}
+
+.sincro.esperando .bolita {
+  background: var(--aviso-tinta);
+}
+
+.sincro.falla .bolita {
+  background: var(--alerta-tinta);
+}
+
+/* --------------------------------------------------------------------- */
+/* La plantilla de sellos                                                 */
+/* --------------------------------------------------------------------- */
+.plantilla {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 14px 0 4px;
+}
+
+.sello {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--linea);
+}
+
+.sello.lleno {
+  background: linear-gradient(135deg, var(--azul) 0%, var(--morado) 100%);
+}
+
+.cuenta {
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.cuenta small {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--tinta-suave);
+}
+
+/* --------------------------------------------------------------------- */
+/* Lista de socias y de movimientos                                       */
+/* --------------------------------------------------------------------- */
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lista li + li {
+  border-top: 1px solid var(--linea);
+}
+
+.lista button.renglon {
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 15px 2px;
+  width: 100%;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.renglon .nombre {
+  font-weight: 600;
+  flex: 1;
+}
+
+.renglon .dato {
+  font-size: 0.86rem;
+  color: var(--tinta-suave);
+  text-align: right;
+}
+
+.movimiento {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 2px;
+  font-size: 0.92rem;
+}
+
+.movimiento .cuando {
+  color: var(--tinta-suave);
+  font-size: 0.82rem;
+}
+
+.movimiento button {
+  width: auto;
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------- */
+/* Teclado del PIN                                                        */
+/* --------------------------------------------------------------------- */
+.centrado {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 70dvh;
+  text-align: center;
+}
+
+.puntos {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin: 22px 0;
+}
+
+.punto {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--azul);
+}
+
+.punto.puesto {
+  background: var(--azul);
+}
+
+.teclado {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 320px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.teclado button {
+  font-size: 1.5rem;
+  font-weight: 600;
+  min-height: 64px;
+  margin: 0;
+}
+
+.teclado button.vacio {
+  background: none;
+  border: 0;
+}
+
+/* --------------------------------------------------------------------- */
+/* Hoja de confirmacion                                                   */
+/* --------------------------------------------------------------------- */
+.fondo {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 16, 48, 0.55);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 10;
+}
+
+.hoja {
+  background: var(--blanco);
+  width: 100%;
+  max-width: 560px;
+  border-radius: 20px 20px 0 0;
+  padding: 22px 18px calc(22px + env(safe-area-inset-bottom));
+  max-height: 88dvh;
+  overflow-y: auto;
+}
+
+.hoja h2 {
+  margin-bottom: 10px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hoja {
+    animation: subir 0.18s ease-out;
+  }
+  @keyframes subir {
+    from {
+      transform: translateY(14px);
+    }
+  }
+}

@@ -1,0 +1,28 @@
+<!doctype html>
+<!--
+  panel\index.html: la cascara del panel de recepcion.
+
+  Compila a `web\panel\index.html` y la sirve el mismo Worker en `/panel/`.
+
+  REGLA DE REDACCION: el texto que ve recepcion NO lleva guiones. Comas, dos puntos,
+  punto y seguido o parentesis. No aplica al codigo ni a los valores de CSS.
+-->
+<html lang="es-MX">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0138DD" />
+    <!-- El panel no se indexa: es una herramienta de mostrador, no una pagina. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <!-- Que el telefono no convierta los numeros en links de llamada dentro de la ficha. -->
+    <meta name="format-detection" content="telephone=no" />
+    <title>Panel Fit Jump</title>
+    <link rel="icon" href="/panel/icono-192.png" />
+    <link rel="manifest" href="/panel/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/panel/icono-192.png" />
+  </head>
+  <body>
+    <div id="panel"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

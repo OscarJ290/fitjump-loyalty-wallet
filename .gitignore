@@ -1,0 +1,10 @@
+node_modules/
+.dev.vars
+credenciales/
+dist/
+.wrangler/
+cloudflare.config.ts
+.neon
+.humo/
+
+landing/capturas/

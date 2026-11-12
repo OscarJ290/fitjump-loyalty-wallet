@@ -1,0 +1,120 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fitjump-wallet",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "observability": { "enabled": true },
+
+  // EL DOMINIO PROPIO, comprado en Cloudflare Registrar y anotado aqui el 19 de
+  // octubre de 2026 con el nombre que dio Oscar. No se dedujo de ninguna sugerencia
+  // vieja: `fitjumplift.com` era una propuesta del 2 de octubre que no se compro.
+  //
+  // `custom_domain` en true hace que wrangler cree el registro de DNS y pida el
+  // certificado por su cuenta, porque la zona vive en esta misma cuenta de Cloudflare.
+  // Es lo que convierte `fitjump.com.mx` en la cara publica del Worker: la pagina de
+  // alta, el panel en `/panel`, las 16 imagenes y el QR impreso de H16.
+  //
+  // ⚠️ SOLO EL DOMINIO DESNUDO. `www.fitjump.com.mx` no esta aqui a proposito: cada
+  // entrada es un certificado y un registro mas, y lo que la socia va a usar es el QR,
+  // que lleva la URL que se imprima. Si alguna vez hace falta que `www` responda, sale
+  // mas barato una regla de redireccion en el panel de Cloudflare que un segundo
+  // custom domain.
+  "routes": [{ "pattern": "fitjump.com.mx", "custom_domain": true }],
+
+  // El subdominio `*.workers.dev` del Worker. SE QUEDA ENCENDIDO, y no es por
+  // comodidad: `WALLET_BASE_IMAGENES` apunta hoy a ese subdominio, asi que la URL de
+  // la imagen de progreso que queda escrita DENTRO de cada objeto de Google cuelga de
+  // el. Apagarlo rompe la imagen de todo pase ya emitido, sin aviso y sin forma de
+  // arreglarlo que no sea parchear pase por pase.
+  //
+  // Queda escrito aqui, aunque `true` sea el valor por omision, porque lo que importa
+  // es que sea una decision y no un descuido. El dia que `WALLET_BASE_IMAGENES` apunte
+  // al dominio propio y ningun pase vivo dependa de workers.dev, esto se puede poner en
+  // false y cerrar una puerta publica de mas. Ver el pendiente de las imagenes en H9.
+  "workers_dev": true,
+
+  // Variables que no son secretos. Los secretos (GOOGLE_PRIVATE_KEY, DATABASE_URL,
+  // GOOGLE_CLIENT_EMAIL, TURNSTILE_SECRET) se suben con `wrangler secret put`, uno
+  // por uno, en H9.
+  //
+  // ⚠️ `CAPTCHA_OPCIONAL` NO VA AQUI NUNCA. Es el permiso para correr `/alta` sin
+  // captcha y vive solo en `backend\.dev.vars`, que no viaja con el deploy. Puesto
+  // aqui, el permiso viajaria a produccion y la pagina publica quedaria abierta.
+  "vars": {
+    "NEGOCIO_ID": "11111111-1111-4111-8111-111111111111",
+    "WALLET_ISSUER_ID": "3388000000023195590",
+    "WALLET_CLASE_ID": "3388000000023195590.fitjump_lealtad_v1",
+
+    // Donde el Worker sirve las imagenes de progreso, sin diagonal final.
+    //
+    // ⚠️ LA CARPETA VA VERSIONADA, Y ESO NO ES DECORACION. La regla dura dice que
+    // nunca se sobrescribe una imagen ya publicada, porque Google cachea por URL y
+    // los pases ya guardados seguirian mostrando la version vieja. Los NOMBRES de
+    // archivo no se pueden cambiar, porque `progresoDelPase` en `mecanica.ts` los
+    // arma a partir del numero de sellos. Asi que lo que cambia es la carpeta: la
+    // URL completa es nueva, la regla se respeta, y esa funcion no se toca.
+    // El dia que las 16 imagenes se regeneren distinto, se crea `v2` y se cambia
+    // esta linea. `v1` se queda publicada para siempre.
+    //
+    // ⚠️ APUNTA AL DOMINIO PROPIO DESDE EL 22 DE OCTUBRE DE 2026, por decision de
+    // Oscar. Antes apuntaba a `fitjump-wallet.oscarvilla.workers.dev`. El cambio es
+    // solo de URL: las 16 imagenes son los mismos bytes en los dos hosts, medido, asi
+    // que no hace falta una carpeta `v2`. Salio gratis porque los tres pases vivos se
+    // reemiten en H11, que es despues.
+    //
+    // ⚠️ Y `.dev.vars` TIENE QUE DECIR LO MISMO. Pisa a este archivo en `wrangler dev`,
+    // y como la base es la de produccion, una prueba local con otro valor dejaria esa
+    // otra URL escrita de verdad dentro de un objeto de Google.
+    "WALLET_BASE_IMAGENES": "https://fitjump.com.mx/imagenes/v1"
+  },
+
+  // La pagina publica de alta y las 16 imagenes. Los archivos estaticos son gratis e
+  // ilimitados en el plan gratuito, y no gastan CPU ni cuentan como peticion al
+  // Worker: `run_worker_first` en false hace que un archivo que existe se sirva
+  // directo y el Worker ni se despierte.
+  "assets": {
+    "directory": "../web",
+    "not_found_handling": "404-page",
+    "run_worker_first": false
+  },
+
+  // El cron reintenta los pases que quedaron pendientes en sync_wallet. El plan
+  // gratuito permite 5 tareas programadas por cuenta; esta es la unica del proyecto.
+  //
+  // ⚠⚠ CADA 30 MINUTOS, Y NO CADA MINUTO. La razon no es el cupo de Cloudflare,
+  // que sobra: es que CADA CORRIDA CONSULTA NEON aunque no haya nada pendiente
+  // (`api.ts`, primera linea de `reintentarPendientes`), asi que un cron de cada
+  // minuto no deja que la base llegue nunca a sus 5 minutos de reposo.
+  //
+  // MEDIDO EL 21 DE OCTUBRE DE 2026 contra la API de Neon: el computo arranco a las
+  // 16:30:35, el minuto en que DATABASE_URL entro a produccion, y NO VOLVIO A
+  // SUSPENDERSE. A 0.25 CU encendido todo el dia son 6 CU-hours diarias contra una
+  // cuota de 100 al mes en el plan gratuito: se agota alrededor del dia 17. Cada 30
+  // minutos son unas 30 CU-hours al mes.
+  //
+  // ⚠ EL COSTO ACEPTADO: un PATCH que le falle a Google tarda hasta 30 minutos en
+  // reintentarse. Es seguro porque EL CRON NO MANDA LOS PATCH NORMALES: esos salen
+  // dentro de la peticion del panel con `waitUntil`. El cron solo recoge lo que
+  // quedo en `sync_wallet` con estado distinto de `ok`.
+  "triggers": {
+    "crons": ["*/30 * * * *"]
+  },
+
+  // Segunda capa de defensa de `/alta`, que es publico y escribe en la base.
+  // Turnstile frena al bot; esto frena al que ya paso una vez y reintenta en bucle.
+  // Es gratis, no necesita almacenamiento y vive en memoria de cada centro de datos,
+  // asi que el cupo es aproximado y no global. Para este uso sobra.
+  //
+  // Cinco altas por minuto por IP: una socia real manda una, y si se equivoca y
+  // corrige, dos o tres. `period` solo acepta 10 o 60.
+  "unsafe": {
+    "bindings": [
+      {
+        "name": "LIMITE_ALTA",
+        "type": "ratelimit",
+        "namespace_id": "1001",
+        "simple": { "limit": 5, "period": 60 }
+      }
+    ]
+  }
+}

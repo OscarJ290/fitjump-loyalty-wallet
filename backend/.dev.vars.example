@@ -1,0 +1,28 @@
+# Plantilla de backend/.dev.vars (ese archivo real NO se versiona).
+# Copiala como .dev.vars y pon valores propios. Los de aqui son marcadores.
+# Los nombres salen del codigo: api.ts (Entorno), wallet.ts (EntornoWallet) y
+# las herramientas de backend/herramientas.
+
+# Base de datos (Neon PostgreSQL por HTTP). Secreto.
+DATABASE_URL=postgresql://usuario:clave@host/base
+
+# Cuenta de servicio de Google Wallet. Secretos.
+GOOGLE_CLIENT_EMAIL=cuenta-de-servicio@proyecto.iam.gserviceaccount.com
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMARCADOR\n-----END PRIVATE KEY-----\n"
+
+# Identificadores de Google Wallet (el Issuer ID y la clase no son secretos).
+WALLET_ISSUER_ID=3388000000023195590
+WALLET_CLASE_ID=3388000000023195590.fitjump_lealtad_v1
+
+# Donde el Worker sirve las imagenes de progreso, sin diagonal final.
+WALLET_BASE_IMAGENES=https://fitjump.com.mx/imagenes/v1
+
+# Negocio al que pertenece la pagina publica de alta (UUID).
+NEGOCIO_ID=11111111-1111-4111-8111-111111111111
+
+# Turnstile (captcha de /alta). Secreto. Si falta, /alta se cierra.
+TURNSTILE_SECRET=marcador-del-secreto-de-turnstile
+
+# Solo para desarrollo local: poner "si" abre /alta sin captcha.
+# Nunca va en wrangler.jsonc ni en produccion.
+# CAPTCHA_OPCIONAL=si

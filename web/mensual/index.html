@@ -1,0 +1,544 @@
+<!doctype html>
+<!--
+  web\mensual\index.html: la pagina publica de alta del PLAN MENSUAL.
+
+  La socia llega escaneando un QR impreso en recepcion. Cada plan tiene su propia
+  pagina con su propio QR, asi que nace DENTRO de su plan y aqui no se le pregunta
+  la modalidad: la decide esta pagina, en el campo oculto `plan`.
+
+  ⚠️ LA PAGINA DEL PLAN SEMANAL YA EXISTE desde el 27 de octubre de 2026, en
+  `web\semanal\index.html`, y es una copia de este archivo con el plan cambiado.
+  **Lo que se toque aqui del CSS, del captcha o del JavaScript hay que tocarlo alla
+  tambien:** son dos archivos estaticos sin build y nada los sincroniza.
+
+  REGLA DE REDACCION: el texto que ve la socia NO lleva guiones. Comas, dos puntos,
+  punto y seguido o parentesis. No aplica al codigo ni a los valores de CSS.
+-->
+<html lang="es-MX">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0138DD" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Tarjeta de sellos Fit Jump</title>
+    <link rel="icon" href="/imagenes/v1/hero-mensual-0.png" />
+    <style>
+      /*
+        Paleta medida contra los archivos de marca, no reconstruida de memoria.
+        El degradado es el mismo de la imagen del pase: diagonal, tres cuartas
+        partes en horizontal y una cuarta en vertical, de 0138DD a 9500B6.
+      */
+      :root {
+        --azul: #0138dd;
+        --morado: #9500b6;
+        --violeta: #bc44fe;
+        --claro: #f7f7f7;
+        --tinta: #1a1030;
+        --alerta: #ffd4d4;
+        --alerta-tinta: #7a0b1e;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100dvh;
+        font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+        color: var(--claro);
+        background: var(--azul);
+        background-image: linear-gradient(135deg, var(--azul) 0%, var(--morado) 100%);
+        background-attachment: fixed;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        /* 16px de aire a los lados, mas lo que pida el notch del telefono. */
+        padding: 28px max(16px, env(safe-area-inset-left)) 28px max(16px, env(safe-area-inset-right));
+      }
+
+      main {
+        width: 100%;
+        max-width: 420px;
+      }
+
+      .marca {
+        text-align: center;
+        margin-bottom: 22px;
+      }
+
+      .vista {
+        display: block;
+        width: 100%;
+        height: auto;
+        /* El mismo radio que Google le da a la tarjeta en el pase. */
+        border-radius: 18px;
+        margin: 0 auto 16px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        line-height: 1.25;
+        margin: 0 0 6px;
+        letter-spacing: -0.01em;
+      }
+
+      .entrada {
+        margin: 0;
+        font-size: 0.98rem;
+        line-height: 1.45;
+        opacity: 0.88;
+      }
+
+      .tarjeta {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 22px;
+        padding: 22px 20px;
+        backdrop-filter: blur(8px);
+      }
+
+      /*
+        Solo las etiquetas de los campos van en versalitas. El aviso de privacidad
+        es un parrafo que la socia tiene que poder leer, y en mayusculas se lee peor
+        y suena a grito.
+      */
+      .campo label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        margin-bottom: 7px;
+        opacity: 0.92;
+      }
+
+      input {
+        width: 100%;
+        /* 16px es el minimo que evita que iOS haga zoom al enfocar el campo. */
+        font-size: 16px;
+        font-family: inherit;
+        color: var(--tinta);
+        background: var(--claro);
+        border: 2px solid transparent;
+        border-radius: 13px;
+        padding: 13px 14px;
+        outline: none;
+      }
+
+      input:focus {
+        border-color: var(--violeta);
+      }
+
+      input:disabled {
+        opacity: 0.6;
+      }
+
+      .campo + .campo {
+        margin-top: 16px;
+      }
+
+      .pista {
+        font-size: 0.8rem;
+        margin: 7px 0 0;
+        opacity: 0.75;
+        min-height: 1.1em;
+      }
+
+      .campo.mal input {
+        border-color: var(--alerta);
+      }
+
+      .campo.mal .pista {
+        color: var(--alerta);
+        opacity: 1;
+      }
+
+      button {
+        width: 100%;
+        margin-top: 22px;
+        font-family: inherit;
+        font-size: 1.02rem;
+        font-weight: 700;
+        color: var(--azul);
+        background: var(--claro);
+        border: 0;
+        border-radius: 13px;
+        padding: 15px;
+        cursor: pointer;
+        /* El pulgar necesita 44px; esto da mas. */
+        min-height: 52px;
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: default;
+      }
+
+      .aviso {
+        display: flex;
+        gap: 11px;
+        align-items: flex-start;
+        margin-top: 20px;
+        font-size: 0.84rem;
+        line-height: 1.45;
+        opacity: 0.9;
+      }
+
+      .aviso input {
+        width: 21px;
+        height: 21px;
+        flex: 0 0 auto;
+        margin-top: 1px;
+        accent-color: var(--violeta);
+      }
+
+      .aviso a {
+        color: var(--claro);
+      }
+
+      .recado {
+        margin-top: 18px;
+        border-radius: 13px;
+        padding: 13px 15px;
+        font-size: 0.9rem;
+        line-height: 1.45;
+        background: var(--alerta);
+        color: var(--alerta-tinta);
+      }
+
+      .recado[hidden] {
+        display: none;
+      }
+
+      /* El boton oficial de Google. Su arte lo sirve Google y no se recolorea. */
+      .listo {
+        text-align: center;
+      }
+
+      .listo img {
+        width: 100%;
+        max-width: 260px;
+        height: auto;
+      }
+
+      .listo a {
+        display: inline-block;
+        margin: 6px 0 2px;
+      }
+
+      .cf-turnstile {
+        margin-top: 18px;
+        display: flex;
+        justify-content: center;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        .tarjeta,
+        .listo {
+          animation: entrar 0.3s ease-out;
+        }
+        @keyframes entrar {
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <main>
+      <div class="marca">
+        <!--
+          La imagen real del pase con cero sellos, la misma que va a ver en Google
+          Wallet. Es la que mejor explica el programa sin una sola linea de texto, y
+          de paso queda en cache para cuando abra el pase.
+        -->
+        <img
+          class="vista"
+          src="/imagenes/v1/hero-mensual-0.png"
+          width="1032"
+          height="812"
+          alt="Tu tarjeta con seis casillas de sellos, todavia vacias."
+        />
+        <h1>Tu tarjeta de sellos Fit Jump</h1>
+        <p class="entrada">
+          Junta un sello por cada mes que pagues. A los 3 sellos puedes pedir 25% de descuento, y si
+          llenas los 6 sin canjear, recibes 50%.
+        </p>
+      </div>
+
+      <!--
+        `data-plan` es lo unico que distingue esta pagina de la del plan semanal.
+        El endpoint valida el nombre contra la tabla `planes`, asi que un valor
+        equivocado aqui da un 400 y no una socia en el plan que no era.
+      -->
+      <form class="tarjeta" id="forma" data-plan="Mensual" novalidate>
+        <div class="campo" id="campo-nombre">
+          <label for="nombre">Tu nombre</label>
+          <input
+            id="nombre"
+            name="nombre"
+            type="text"
+            autocomplete="name"
+            enterkeyhint="next"
+            maxlength="80"
+            required
+          />
+          <p class="pista" id="pista-nombre">Como quieres que te llamemos.</p>
+        </div>
+
+        <div class="campo" id="campo-whatsapp">
+          <label for="whatsapp">Tu WhatsApp</label>
+          <input
+            id="whatsapp"
+            name="whatsapp"
+            type="tel"
+            inputmode="numeric"
+            autocomplete="tel-national"
+            enterkeyhint="done"
+            maxlength="20"
+            placeholder="55 1234 5678"
+            required
+          />
+          <p class="pista" id="pista-whatsapp">Diez digitos, con la clave de tu ciudad.</p>
+        </div>
+
+        <label class="aviso" for="acepto">
+          <input id="acepto" type="checkbox" required />
+          <span>
+            Acepto que Fit Jump guarde mi nombre y mi WhatsApp para darme mi tarjeta de sellos y
+            avisarme de mis descuentos. Puedo pedir que borren mis datos cuando quiera.
+          </span>
+        </label>
+
+        <!--
+          Turnstile, el captcha de Cloudflare. `data-sitekey` es publico a proposito:
+          asi funciona, y por eso puede vivir en un repo que se vuelve publico.
+
+          ⚠️⚠️ AQUI FALTA LA LLAVE DE SITIO REAL. SE PEGA EN H9, junto con
+          `wrangler secret put TURNSTILE_SECRET`. Sale del panel de Cloudflare, en
+          Turnstile, al crear el widget del dominio propio. Las dos piezas van juntas o
+          `/alta` no abre: el Worker se cierra solo cuando no hay secreto.
+
+          ⚠️ HASTA EL 19 DE OCTUBRE DE 2026 AQUI VIVIA `1x00000000000000000000AA`, la
+          llave de PRUEBA que Cloudflare publica y que SIEMPRE PASA. Se quito a
+          proposito: desplegar sin acordarse de cambiarla dejaba una pagina publica que
+          escribe en la base con un captcha que aprueba a cualquiera, y nada en la
+          pantalla lo decia. Ahora el marcador de abajo rompe el widget a la vista y la
+          pagina lo grita en un recado.
+
+          Para probar en local se puede pegar esa llave de prueba un rato, pero
+          **nunca se commitea**: lo que tiene que estar en el repo es este marcador o
+          la llave real.
+        -->
+        <div
+          class="cf-turnstile"
+          data-sitekey="0x4AAAAAAFfx5SpX24Z2OsTV"
+          data-theme="light"
+          data-callback="captchaListo"
+        ></div>
+
+        <button type="submit" id="enviar">Crear mi tarjeta</button>
+      </form>
+
+      <div class="recado" id="recado" hidden role="alert" aria-live="assertive"></div>
+
+      <div class="tarjeta listo" id="listo" hidden>
+        <h1 id="saludo">Lista</h1>
+        <p class="entrada" id="instruccion">
+          Toca el boton para guardar tu tarjeta en Google Wallet. Ahi vas a ver tus sellos
+          actualizarse solos.
+        </p>
+        <!--
+          El boton oficial de Google, el de es419 (español de Latinoamerica), que es
+          el mismo idioma que wallet.ts le pone al pase. Se sirve DESDE AQUI, no
+          enlazado a un repo ajeno: el proyecto ya tiene anotado que las imagenes de
+          los pases vivos cuelgan de un `raw.githubusercontent.com` que si se borra
+          los rompe sin aviso, y no hay razon para repetir eso en la pagina de alta.
+          Bajado de developers.google.com/static/wallet/download-assets.
+          Su arte no se recolorea ni se redibuja: son las reglas de marca de Google.
+        -->
+        <a id="enlace" href="#" rel="noopener">
+          <img src="/boton-google-wallet.svg" alt="Agregar a Google Wallet" width="239" height="55" />
+        </a>
+      </div>
+    </main>
+
+    <!--
+      El unico script de terceros de la pagina. VA SIN `integrity` A PROPOSITO:
+      Cloudflare actualiza `api.js` en el mismo URL sin versionarlo, asi que fijar un
+      hash haria que el captcha dejara de cargar el dia que lo cambien, y con el
+      captcha caido el boton no se puede enviar. Es el modo en que Cloudflare
+      documenta integrarlo. Lo demas de la pagina es local.
+    -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script>
+      (function () {
+        'use strict';
+
+        var forma = document.getElementById('forma');
+        var enviar = document.getElementById('enviar');
+        var recado = document.getElementById('recado');
+        var listo = document.getElementById('listo');
+
+        /**
+         * La misma regla que ya exige la base: mas 52 y diez digitos. Se valida aqui
+         * para que la socia no vea un error crudo del servidor, pero el servidor
+         * vuelve a validar: esto es comodidad, no seguridad.
+         */
+        function normalizarWhatsapp(entrada) {
+          var digitos = String(entrada || '').replace(/\D/g, '');
+          if (digitos.length === 10) return '+52' + digitos;
+          if (digitos.length === 12 && digitos.indexOf('52') === 0) return '+52' + digitos.slice(2);
+          if (digitos.length === 13 && digitos.indexOf('521') === 0) return '+52' + digitos.slice(3);
+          return null;
+        }
+
+        function marcar(idCampo, idPista, texto) {
+          var campo = document.getElementById(idCampo);
+          var pista = document.getElementById(idPista);
+          if (texto) {
+            campo.classList.add('mal');
+            pista.textContent = texto;
+          } else {
+            campo.classList.remove('mal');
+          }
+          return !texto;
+        }
+
+        function decir(texto) {
+          recado.textContent = texto;
+          recado.hidden = !texto;
+        }
+
+        // Turnstile escribe su token en un input oculto que inyecta dentro del form.
+        window.captchaListo = function () {
+          decir('');
+        };
+
+        /**
+         * Si alguien despliega sin pegar la llave de sitio, que se note en la pantalla
+         * y no solo en el codigo. El Worker ya se cierra por su lado cuando le falta el
+         * secreto; esto es la mitad visible de lo mismo.
+         *
+         * El formulario se deja usable a proposito: en local, con CAPTCHA_OPCIONAL
+         * puesto, el alta si funciona, y quien prueba necesita poder probar. En
+         * produccion el que contesta que no es el servidor, no esta pagina.
+         */
+        (function avisarSiFaltaLaLlave() {
+          var widget = document.querySelector('.cf-turnstile');
+          var llave = widget ? widget.getAttribute('data-sitekey') : '';
+          if (llave && llave.indexOf('PEGA_AQUI') === 0) {
+            decir(
+              'Esta pagina todavia no tiene su llave de Turnstile, asi que el registro puede no funcionar. Avisale a Oscar.',
+            );
+          }
+        })();
+
+        function tokenDelCaptcha() {
+          var campo = forma.querySelector('[name="cf-turnstile-response"]');
+          return campo ? campo.value : '';
+        }
+
+        forma.addEventListener('submit', function (evento) {
+          evento.preventDefault();
+          decir('');
+
+          var nombre = document.getElementById('nombre').value.trim();
+          var crudo = document.getElementById('whatsapp').value;
+          var whatsapp = normalizarWhatsapp(crudo);
+
+          var bien = marcar(
+            'campo-nombre',
+            'pista-nombre',
+            nombre.length >= 2 ? '' : 'Escribe tu nombre, aunque sea el de pila.',
+          );
+          bien =
+            marcar(
+              'campo-whatsapp',
+              'pista-whatsapp',
+              whatsapp ? '' : 'Necesitamos diez digitos, con la clave de tu ciudad.',
+            ) && bien;
+
+          if (!document.getElementById('acepto').checked) {
+            decir('Marca la casilla para que podamos darte tu tarjeta.');
+            bien = false;
+          }
+          if (!bien) return;
+
+          enviar.disabled = true;
+          enviar.textContent = 'Creando tu tarjeta...';
+
+          fetch('/alta', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              nombre: nombre,
+              whatsapp: whatsapp,
+              plan: forma.dataset.plan,
+              captcha: tokenDelCaptcha(),
+            }),
+          })
+            .then(function (r) {
+              return r.json().then(function (datos) {
+                return { estado: r.status, datos: datos };
+              });
+            })
+            .then(function (r) {
+              if (r.estado === 200 && r.datos.link) {
+                document.getElementById('enlace').href = r.datos.link;
+                document.getElementById('saludo').textContent =
+                  'Lista, ' + (r.datos.nombre || '').split(' ')[0];
+                // Que vuelva a escanear el QR es normal: cambio de telefono, borro el
+                // pase. Se le devuelve el suyo, y el texto se lo dice para que no crea
+                // que se dio de alta dos veces.
+                if (r.datos.yaRegistrada) {
+                  document.getElementById('instruccion').textContent =
+                    'Ya tenias tu tarjeta con nosotros, asi que esta es la misma de siempre, con tus sellos. Toca el boton para volver a guardarla.';
+                }
+                forma.hidden = true;
+                listo.hidden = false;
+                return;
+              }
+
+              // Google fallo. La socia YA existe en la base y el reintento corre cada
+              // minuto, asi que lo util es decirle eso y que vuelva a tocar el boton,
+              // no dejarla pensando que se perdio su registro.
+              if (r.datos.pendiente) {
+                decir(
+                  'Tu registro ya quedo guardado, pero tu tarjeta todavia se esta creando. Espera unos segundos y toca el boton otra vez.',
+                );
+              } else if (r.estado === 429) {
+                decir('Demasiados intentos seguidos. Espera un minuto y vuelve a intentar.');
+              } else {
+                decir(r.datos.error || 'Algo salio mal. Intenta de nuevo en un momento.');
+              }
+              if (window.turnstile) window.turnstile.reset();
+            })
+            .catch(function () {
+              decir('No pudimos conectar. Revisa tu internet y vuelve a intentar.');
+              if (window.turnstile) window.turnstile.reset();
+            })
+            .then(function () {
+              enviar.disabled = false;
+              enviar.textContent = 'Crear mi tarjeta';
+            });
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,139 @@
+# Respaldo semanal de la base de Neon.
+#
+# Corre `pg_dump`, cifra el resultado y lo sube como artefacto del repositorio.
+#
+# ⚠️ POR QUE AQUI Y NO EN UN WORKER: `pg_dump` no corre dentro de Cloudflare Workers.
+# No es una limitacion de este proyecto, es que el runtime no tiene procesos ni binarios.
+#
+# ⚠️ NINGUN PASO IMPRIME LA CADENA DE CONEXION NI LA FRASE DE CIFRADO, ni enmascaradas.
+# Lo que se imprime es la version de las herramientas, el tamaño de los archivos y el
+# nombre del artefacto. GitHub enmascara los secretos en el registro, pero esa es la
+# segunda red, no la primera: la primera es no escribirlos nunca.
+
+name: respaldo semanal
+
+on:
+  # ⚠️ EL MINUTO NO ES 0 A PROPOSITO. A las horas en punto se amontonan las tareas
+  # programadas de todo GitHub y las encolan; un minuto raro arranca a tiempo.
+  # Lunes a las 08:17 UTC, o sea las 02:17 en Ciudad de Mexico: la base esta quieta.
+  schedule:
+    - cron: '17 8 * * 1'
+  # Para correrlo a mano desde la pestaña Actions, que es como se prueba.
+  workflow_dispatch:
+
+# Si dos respaldos se enciman, gana el nuevo y el viejo se cancela.
+concurrency:
+  group: respaldo
+  cancel-in-progress: true
+
+jobs:
+  respaldo:
+    runs-on: ubuntu-latest
+    # Este trabajo no lee el repositorio: no hay checkout a proposito. Solo habla con
+    # Neon y sube un archivo.
+    permissions:
+      contents: read
+
+    steps:
+      - name: Comprobar que la cadena es la DIRECTA, no la del pooler
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL}" ]; then
+            echo "PARA: falta el secreto DATABASE_URL del repositorio."
+            exit 1
+          fi
+          # ⚠️ `grep -q` NO IMPRIME NADA. Comparar sin imprimir es la unica forma de
+          # revisar una cadena de conexion en un registro que queda publicado.
+          if printf '%s' "${DATABASE_URL}" | grep -q -- '-pooler'; then
+            echo "PARA: la cadena apunta al POOLER y un respaldo tiene que salir de la"
+            echo "conexion DIRECTA. El pooler multiplexa sesiones, asi que no garantiza"
+            echo "que pg_dump vea una sola instantanea coherente de toda la base."
+            echo "Quita el segmento -pooler del host en el secreto DATABASE_URL."
+            exit 1
+          fi
+          echo "La cadena es directa."
+
+      - name: Instalar el cliente de PostgreSQL 18 desde PGDG
+        run: |
+          set -euo pipefail
+          # ⚠️ EL CLIENTE QUE TRAE ubuntu-latest ES MAS VIEJO QUE EL SERVIDOR Y NO SIRVE.
+          # Medido el 21 de octubre de 2026: Neon corre PostgreSQL 18.6, y un pg_dump 17
+          # se niega con "aborting because of server version mismatch". pg_dump tiene que
+          # ser de la misma version mayor que el servidor o mas nueva, nunca mas vieja.
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+            -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client-18
+          pg_dump --version
+          psql --version
+
+      - name: Comprobar que el cliente no es mas viejo que el servidor
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          servidor=$(psql "${DATABASE_URL}" -At -c "show server_version" | cut -d. -f1)
+          cliente=$(pg_dump --version | grep -oE '[0-9]+' | head -1)
+          echo "servidor: PostgreSQL ${servidor}, cliente: pg_dump ${cliente}"
+          if [ "${cliente}" -lt "${servidor}" ]; then
+            echo "PARA: el cliente es mas viejo que el servidor y pg_dump se va a negar."
+            echo "Sube la version de postgresql-client en el paso anterior."
+            exit 1
+          fi
+
+      - name: Volcar y cifrar
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RESPALDO_CLAVE: ${{ secrets.RESPALDO_CLAVE }}
+        run: |
+          set -euo pipefail
+          if [ -z "${RESPALDO_CLAVE}" ]; then
+            echo "PARA: falta el secreto RESPALDO_CLAVE del repositorio."
+            exit 1
+          fi
+          fecha=$(date -u +%Y-%m-%d)
+          echo "nombre=respaldo-fitjump-${fecha}" >> "${GITHUB_ENV}"
+
+          # `-Fc` es el formato comprimido de PostgreSQL: lo lee `pg_restore`, permite
+          # restaurar tabla por tabla y pesa mucho menos que el SQL plano.
+          # `--no-owner` y `--no-privileges` quitan los GRANT y los dueños, que en Neon
+          # son de otro rol y harian fallar la restauracion en un destino nuevo.
+          pg_dump -Fc --no-owner --no-privileges -f "respaldo-${fecha}.dump" "${DATABASE_URL}"
+          echo "volcado: $(stat -c %s "respaldo-${fecha}.dump") bytes"
+
+          # ⚠️ SE CIFRA ANTES DE SUBIR, Y LA RAZON ES UNA FECHA: en H18 este repo se
+          # vuelve PUBLICO. El volcado trae el nombre y el WhatsApp de cada socia, y los
+          # artefactos dejan de estar protegidos por que el repositorio sea privado en el
+          # momento en que deje de serlo. Un artefacto viejo sigue ahi.
+          #
+          # La frase entra por la entrada estandar y nunca por la linea de comandos:
+          # cualquiera que liste los procesos de la maquina veria el argumento.
+          printf '%s' "${RESPALDO_CLAVE}" | gpg --symmetric --cipher-algo AES256 \
+            --batch --yes --passphrase-fd 0 \
+            --output "respaldo-${fecha}.dump.gpg" "respaldo-${fecha}.dump"
+
+          # El volcado en claro se borra ANTES de subir nada, para que no exista la
+          # posibilidad de que viaje por accidente.
+          shred -u "respaldo-${fecha}.dump" 2>/dev/null || rm -f "respaldo-${fecha}.dump"
+
+          if [ -f "respaldo-${fecha}.dump" ]; then
+            echo "PARA: el volcado en claro sigue existiendo. No se sube nada."
+            exit 1
+          fi
+          echo "cifrado: $(stat -c %s "respaldo-${fecha}.dump.gpg") bytes"
+
+      - name: Subir el artefacto cifrado
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.nombre }}
+          # ⚠️ SOLO EL ARCHIVO CIFRADO. El patron no lleva comodin a proposito.
+          path: respaldo-*.dump.gpg
+          # Explicito y no heredado: 90 dias es lo que el plan gratuito de GitHub
+          # permite, y deja tres meses de respaldos semanales vivos a la vez.
+          retention-days: 90
+          if-no-files-found: error
